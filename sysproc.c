@@ -93,5 +93,5 @@ sys_uptime(void)
 int
 sys_getppid(void)
 {
-    return ggetppid(); 
+    return sys_getppid();
 }

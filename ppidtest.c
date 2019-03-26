@@ -4,6 +4,7 @@
 int main(void) {
     int parent = getpid();
     int child = fork();
+
     if(child == 0) {
         printf(1, "child: parent=%d child=%d getpid()=%d getppid()=%d\n",
                 parent, child, getpid(), getppid());
