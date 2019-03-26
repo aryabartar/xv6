@@ -93,5 +93,7 @@ sys_uptime(void)
 int
 sys_getppid(void)
 {
-    return sys_getppid();
+    cprintf("Run sys_getppid.\n");
+    struct proc *curproc = myproc();
+    return curproc->parent->pid;
 }
