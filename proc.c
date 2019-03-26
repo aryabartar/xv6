@@ -537,5 +537,6 @@ procdump(void)
 int
 get_ppid(void)
 {
-    return proc->parent->pid;
+    struct proc *curproc = myproc();
+    return curproc->parent->pid;
 }
