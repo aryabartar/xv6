@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "mmu.h": "c",
+        "defs.h": "c"
+    }
+}
