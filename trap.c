@@ -53,7 +53,6 @@ trap(struct trapframe *tf)
       ticks++;
       if(myproc() && myproc()->state == RUNNING){
 
-       cprintf("%d hi my name is hadi" ,ticks);    
        myproc()->rtime++;  
               
       }

@@ -97,3 +97,27 @@ sys_getppid(void)
     struct proc *curproc = myproc();
     return curproc->parent->pid;
 }
+
+int
+sys_getPerformanceData(void)
+{
+  int *wtime;
+  int *rtime;
+
+  argint(0,&wtime);
+  argint(1,&rtime);
+
+  int creation_time = myproc()->ctime;
+  int end_time = myproc()->etime;
+  int run_time = myproc()->rtime;
+  
+  int turnaroundtime = end_time - creation_time;
+  int waitingtime = turnaroundtime - run_time;
+  
+  *wtime = waitingtime;
+  *rtime = run_time;
+  
+  cprintf("%d  , %d\n",*wtime,*rtime);
+  
+  return 1;
+}
