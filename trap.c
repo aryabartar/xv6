@@ -52,7 +52,8 @@ trap(struct trapframe *tf)
       acquire(&tickslock);
       ticks++;
 
-      myproc()->rtime++;
+      // cprintf("%d" ,ticks);
+      // myproc()->rtime++;
 
       wakeup(&ticks);
       release(&tickslock);

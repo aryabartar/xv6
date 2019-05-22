@@ -82,12 +82,15 @@ allocproc(void)
     if(p->state == UNUSED)
       goto found;
 
+
   release(&ptable.lock);
   return 0;
 
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->ctime = ticks;
+
 
   release(&ptable.lock);
 
@@ -106,6 +109,7 @@ found:
   // which returns to trapret.
   sp -= 4;
   *(uint*)sp = (uint)trapret;
+
 
   sp -= sizeof *p->context;
   p->context = (struct context*)sp;
@@ -263,6 +267,8 @@ exit(void)
 
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
+  myproc()->etime = ticks;
+  cprintf("%d  , %d  , %d ",myproc()->ctime,myproc()->rtime,myproc()->etime);
   sched();
   panic("zombie exit");
 }
