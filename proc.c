@@ -399,7 +399,7 @@ void
 yield(void)
 {
   if(myproc()->processCounter < QUANTA){
-    cprintf("one QUANTA passed!%d\n",myproc()->pid);
+    // cprintf("one QUANTA passed!%d\n",myproc()->pid);
   }
   else{
   acquire(&ptable.lock);  //DOC: yieldlock
