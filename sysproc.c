@@ -101,23 +101,25 @@ sys_getppid(void)
 int
 sys_getPerformanceData(void)
 {
-  int *wtime;
+
+  int *wtime ;
   int *rtime;
 
-  argint(0,&wtime);
-  argint(1,&rtime);
+  argptr(0, (void*)&wtime, 2*sizeof(wtime[0]));
+  argptr(1, (void*)&rtime, 2*sizeof(rtime[0]));
+
 
   int creation_time = myproc()->ctime;
-  int end_time = myproc()->etime;
   int run_time = myproc()->rtime;
   
-  int turnaroundtime = end_time - creation_time;
+  int turnaroundtime = ticks - creation_time;
   int waitingtime = turnaroundtime - run_time;
   
   *wtime = waitingtime;
   *rtime = run_time;
   
-  cprintf("%d  , %d\n",*wtime,*rtime);
+  // cprintf("ctime = %d  ,rtime = %d , etime = %d\n",myproc()->ctime,myproc()->rtime,end_time);
+  cprintf("wtime = %d  ,rtime = %d\n",waitingtime,run_time);
   
   return 1;
 }
