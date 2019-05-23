@@ -118,8 +118,7 @@ sys_getPerformanceData(void)
   *wtime = waitingtime;
   *rtime = run_time;
   
-  // cprintf("ctime = %d  ,rtime = %d , etime = %d\n",myproc()->ctime,myproc()->rtime,end_time);
-  cprintf("wtime = %d  ,rtime = %d\n",waitingtime,run_time);
+  // cprintf("wtime = %d  ,rtime = %d\n",waitingtime,run_time);
   
   return 1;
 }
