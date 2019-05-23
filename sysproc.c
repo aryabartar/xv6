@@ -102,23 +102,15 @@ int
 sys_getPerformanceData(void)
 {
 
-  int *wtime ;
-  int *rtime;
+  long long int *wtime ;
+  long long int *rtime;
 
-  argptr(0, (void*)&wtime, 2*sizeof(wtime[0]));
-  argptr(1, (void*)&rtime, 2*sizeof(rtime[0]));
-
-
-  int creation_time = myproc()->ctime;
-  int run_time = myproc()->rtime;
+  argptr(0, (void*)&wtime, 2*sizeof(long long int));
+  argptr(1, (void*)&rtime, 2*sizeof(long long int));
   
-  int turnaroundtime = ticks - creation_time;
-  int waitingtime = turnaroundtime - run_time;
+  *wtime = ticks - myproc()->ctime;
+  *rtime = myproc()->rtime;
   
-  *wtime = waitingtime;
-  *rtime = run_time;
-  
-  // cprintf("wtime = %d  ,rtime = %d\n",waitingtime,run_time);
-  
+  // cprintf("\ncreate time is: %d | run time is: %d | ticks : %d | test: %d | akbar is: %d \n", myproc()->ctime, run_time, ticks, turnaroundtime, turnaroundtime - waitingtime);
   return 1;
 }

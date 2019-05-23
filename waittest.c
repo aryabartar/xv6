@@ -29,8 +29,8 @@ foo()
 void
 waittest(void)
 {
-  int wTime;
-  int rTime;
+  long long int wTime;
+  long long int rTime;
   int pid;
   printf(1, "wait test\n");
 
@@ -40,7 +40,8 @@ waittest(void)
     {
       foo();
       getPerformanceData(&wTime,&rTime);
-      printf(1, "wTime: %d rTime: %d \n",wTime,rTime);
+      printf(1, "wTime: %d \n",wTime);
+      printf(1, "rTime: %d \n",rTime);
       exit();
     }
     wait();
