@@ -2,49 +2,39 @@
 #include "stat.h"
 #include "user.h"
 
-
-
-
 void rrtest(void)
 {
-    int n, pid;
-    long long int  wTime[10],rTime[10];
-    int cid[10];
-    printf(1, "RR sanity test test\n");
+    int pid;
+    int N = 10;
+    long long int wTime, rTime;
 
-    for(n=0; n<10; n++)
+    for (int n = 0; n < N; n++)
     {
         pid = fork();
-        if(pid < 0)
+        if (pid < 0)
         {
-            printf(1,"fork failed!\n");
             return;
         }
-        if(pid == 0)
+        if (pid == 0)
         {
             int i;
-            for(i = 0 ; i < 20 ; i++)
+            for (i = 0; i < 50; i++)
             {
-                printf(1,"Child %d prints for the %d time\n",getpid(),i);
+                printf(1, "asghar");
             }
             break;
         }
-        if(pid > 0)
-            cid[n] = pid;
     }
-    wait();
-    if(pid > 0)
+    for (int i = 0; i < N; i++)
     {
-        for(n=0;n<10;n++)
-            getPerformanceData(&wTime[n],&rTime[n]);
-        
-        for(n=0;n<10;n++){
-                printf(1, "id: %d \n",cid[n]);
-                printf(1, "wTime: %d \n",wTime[n]);
-                printf(1, "rTime: %d \n",rTime[n]);}
-                wait();
-            // printf(1, "Child %d status:\nWaiting Time: %d\tRunning Time : %d\tTurnaround Time: %d\n",cid[n],wTime[n],rTime[n],wTime[n]+rTime[n]);
+        wait();
     }
+
+    getPerformanceData(&wTime, &rTime);
+    printf(1, "\n\nmy pid is: %d |", getpid());
+    printf(1, "wTime: %d | ", wTime);
+    printf(1, "rTime: %d \n\n", rTime);
+
 }
 
 int main(void)
