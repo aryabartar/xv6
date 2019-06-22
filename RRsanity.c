@@ -18,9 +18,9 @@ void rrtest(void)
         if (pid == 0)
         {
             int i;
-            for (i = 0; i < 50; i++)
+            for (i = 0; i < 20; i++)
             {
-                printf(1, "asghar");
+                printf(1, "[%d running]\n", getpid());
             }
             break;
         }
@@ -31,9 +31,9 @@ void rrtest(void)
     }
 
     getPerformanceData(&wTime, &rTime);
-    printf(1, "\n\nmy pid is: %d |", getpid());
+    printf(1, "\n[FINISHED pid: %d | ", getpid());
     printf(1, "wTime: %d | ", wTime);
-    printf(1, "rTime: %d \n\n", rTime);
+    printf(1, "rTime: %d] \n\n", rTime);
 
 }
 
