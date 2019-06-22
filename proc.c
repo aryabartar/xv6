@@ -351,20 +351,21 @@ scheduler(void)
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     if(policyChooser == RR){
-      for(p = ptable.proc ; p < &ptable.proc[NPROC];p++){
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
         if(p->state != RUNNABLE)
           continue;
+
         c->proc = p;
         switchuvm(p);
         p->processCounter = 0;
         p->state = RUNNING;
+        
         swtch(&(c->scheduler) , p->context);
         switchkvm();
         c->proc = 0;
       }
     }
     release(&ptable.lock);
-
   }
 }
 
