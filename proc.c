@@ -399,8 +399,11 @@ sched(void)
 void
 yield(void)
 {
+  myproc()->rtime++;
+  myproc()->processCounter++; 
+  
   if(myproc()->processCounter < QUANTA){
-    // cprintf("one QUANTA passed!%d\n",myproc()->pid);
+    //Not ready for CS
   }
   else{
     acquire(&ptable.lock);  //DOC: yieldlock
