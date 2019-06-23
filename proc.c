@@ -5,7 +5,7 @@
 #include "mmu.h"
 #include "x86.h"
 #include "proc.h"
-#include "spinlock.h"
+#include "spinlock.h" 
 
 #define RR          0
 #define FRR         1
