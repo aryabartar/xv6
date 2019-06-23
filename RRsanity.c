@@ -6,6 +6,7 @@ void rrtest(void)
 {
     int pid;
     int N = 10;
+    int a = 1;
     long long int wTime, rTime;
 
     for (int n = 0; n < N; n++)
@@ -18,13 +19,15 @@ void rrtest(void)
         if (pid == 0)
         {
             int i;
-            for (i = 0; i < 20; i++)
+            for (i = 0; i < 400; i++)
             {
-                printf(1, "[%d running]\n", getpid());
+                a = a*1.2;
+                printf(1, "     ", getpid());
             }
             break;
         }
     }
+    
     for (int i = 0; i < N; i++)
     {
         wait();

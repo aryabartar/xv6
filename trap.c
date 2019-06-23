@@ -50,9 +50,10 @@ trap(struct trapframe *tf)
   case T_IRQ0 + IRQ_TIMER:
     if(cpuid() == 0){
       acquire(&tickslock);
-      
+
       ticks++;
       if(myproc() && myproc()->state == RUNNING){
+      //  cprintf("[TICK for %d]\n",myproc()->pid);
        myproc()->rtime++;  
        myproc()->processCounter++;        
       }

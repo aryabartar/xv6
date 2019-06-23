@@ -403,10 +403,10 @@ yield(void)
     // cprintf("one QUANTA passed!%d\n",myproc()->pid);
   }
   else{
-  acquire(&ptable.lock);  //DOC: yieldlock
-  myproc()->state = RUNNABLE;
-  sched();
-  release(&ptable.lock);
+    acquire(&ptable.lock);  //DOC: yieldlock
+    myproc()->state = RUNNABLE;
+    sched();
+    release(&ptable.lock);
   }
 }
 
