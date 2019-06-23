@@ -21,23 +21,24 @@ void rrtest(void)
             int i;
             for (i = 0; i < 400; i++)
             {
-                a = a*1.2;
+                a = a * 1.2;
                 printf(1, "     ", getpid());
             }
             break;
         }
     }
-    
-    for (int i = 0; i < N; i++)
+    if (pid != 0)
     {
-        wait();
+        for (int i = 0; i < N; i++)
+        {
+            wait();
+        }
     }
 
     getPerformanceData(&wTime, &rTime);
     printf(1, "\n[FINISHED pid: %d | ", getpid());
     printf(1, "wTime: %d | ", wTime);
     printf(1, "rTime: %d] \n\n", rTime);
-
 }
 
 int main(void)
