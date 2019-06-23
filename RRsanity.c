@@ -1,12 +1,13 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
+#include "stdbool.h"
 
 void rrtest(void)
 {
     int pid;
     int N = 10;
-    int a = 1;
+    bool lock = false;
     long long int wTime, rTime;
 
     for (int n = 0; n < N; n++)
@@ -20,9 +21,11 @@ void rrtest(void)
         {
             int i;
             for (i = 0; i < 400; i++)
-            {
-                a = a * 1.2;
-                printf(1, "     ", getpid());
+            {   
+                while(lock);
+                lock=true;
+                printf(1, "[pid:%d]", getpid());
+                lock=false;
             }
             break;
         }
