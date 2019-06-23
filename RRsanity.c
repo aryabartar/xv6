@@ -24,7 +24,8 @@ void rrtest(void)
             {   
                 while(lock);
                 lock=true;
-                printf(1, "[pid:%d]", getpid());
+                printf(1, "[pid:%d]", getpid(), i);
+                // printf(1, "[pid:%d, %d time]", getpid(), i);
                 lock=false;
             }
             break;
@@ -38,10 +39,13 @@ void rrtest(void)
         }
     }
 
+    while(lock);
+    lock=true;
     getPerformanceData(&wTime, &rTime);
-    printf(1, "\n[FINISHED pid: %d | ", getpid());
-    printf(1, "wTime: %d | ", wTime);
-    printf(1, "rTime: %d] \n\n", rTime);
+    // printf(1, "\n\n [FINISHED pid: %d | ", getpid());
+    // printf(1, "wTime: %d | ", wTime);
+    // printf(1, "rTime: %d] \n\n", rTime);
+    lock=false;
 }
 
 int main(void)

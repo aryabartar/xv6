@@ -12,7 +12,7 @@
 #define GRT         2
 #define Q3          3
 
-int policyChooser = RR;
+int policyChooser = FRR;
 
 
 struct {
@@ -365,6 +365,23 @@ scheduler(void)
         c->proc = 0;
       }
     }
+    else if (policyChooser == FRR)
+    {
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->state != RUNNABLE)
+          continue;
+
+        c->proc = p;
+        switchuvm(p);
+        p->processCounter = 0;
+        p->state = RUNNING;
+        cprintf("YYYY");
+        swtch(&(c->scheduler) , p->context);
+        switchkvm();
+        c->proc = 0;
+      }
+    }
+    
     release(&ptable.lock);
   }
 }
@@ -406,10 +423,16 @@ yield(void)
     //Not ready for CS
   }
   else{
-    acquire(&ptable.lock);  //DOC: yieldlock
-    myproc()->state = RUNNABLE;
-    sched();
-    release(&ptable.lock);
+    if (policyChooser == FRR){
+      // cprintf("%s", myproc()->state);
+    }
+    else {
+      cprintf("HHHHHH");
+      acquire(&ptable.lock);  //DOC: yieldlock
+      myproc()->state = RUNNABLE;
+      sched();
+      release(&ptable.lock);
+    }
   }
 }
 
