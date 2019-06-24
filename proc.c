@@ -6,11 +6,13 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h" 
+#define NULL 0
 
 #define RR          0
 #define FRR         1
 #define GRT         2
 #define Q3          3
+
 
 int policyChooser = RR;
 
@@ -365,6 +367,18 @@ scheduler(void)
         c->proc = 0;
       }
     }
+    else if(policyChooser == GRT){
+      struct proc *minP = NULL;
+        for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+          if(p->state == RUNNABLE){
+            if (minP!=NULL){
+              if((p->rtime/(ticks - p->ctime)) < (minP->rtime/(ticks - minP->ctime)))
+                minP = p;
+            }
+            else
+              minP = p;
+          }
+        }
     release(&ptable.lock);
   }
 }
