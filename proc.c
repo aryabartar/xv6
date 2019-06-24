@@ -93,6 +93,7 @@ found:
   p->pid = nextpid++;
   p->rtime = 0;
   p->ctime = ticks;
+  p->piority = HIGH_PIORITY;
 
 
   release(&ptable.lock);
