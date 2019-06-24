@@ -148,6 +148,12 @@ main(void)
   #ifdef RR
   printf(1,"RR\n");
   #endif
+  #ifdef FRR
+  printf(1,"FRR\n");
+  #endif
+  #ifdef MLQ
+  printf(1,"MLQ");
+  #endif
   #ifdef GRT
   printf(1,"GRT\n");
   #endif

@@ -8,15 +8,6 @@
 #include "spinlock.h" 
 #define NULL 0
 
-// #define RR          0
-// #define FRR         1
-// #define GRT         2
-// #define Q3          3
-
-
-// int policyChooser = GRT;
-
-
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
