@@ -14,7 +14,7 @@
 #define Q3          3
 
 
-int policyChooser = RR;
+int policyChooser = GRT;
 
 
 struct {
@@ -372,8 +372,10 @@ scheduler(void)
         for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
           if(p->state == RUNNABLE){
             if (minp !=NULL){
-              if((p->rtime/(ticks - p->ctime)) < (minp->rtime/(ticks - minp->ctime)))
+              // cprintf("\n\n\n%d\n\n",((p->rtime)*100/(ticks - p->ctime)) - ((minp->rtime)*100/(ticks - minp->ctime)));
+              if(((p->rtime)*100/(ticks - p->ctime)) < ((minp->rtime)*100/(ticks - minp->ctime))){
                 minp = p;
+              }
             }
             else
               minp = p;
