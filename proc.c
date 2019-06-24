@@ -368,17 +368,27 @@ scheduler(void)
       }
     }
     else if(policyChooser == GRT){
-      struct proc *minP = NULL;
+      struct proc *minp = NULL;
         for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
           if(p->state == RUNNABLE){
-            if (minP!=NULL){
-              if((p->rtime/(ticks - p->ctime)) < (minP->rtime/(ticks - minP->ctime)))
-                minP = p;
+            if (minp !=NULL){
+              if((p->rtime/(ticks - p->ctime)) < (minp->rtime/(ticks - minp->ctime)))
+                minp = p;
             }
             else
-              minP = p;
+              minp = p;
           }
         }
+        if (minp!=NULL){
+          p = minp;
+          c->proc = p;
+          switchuvm(p);
+          p->state = RUNNING;
+          swtch(&mycpu()->scheduler, c->proc->context);
+          switchkvm();
+          c->proc = 0;
+        }
+    }
     release(&ptable.lock);
   }
 }
