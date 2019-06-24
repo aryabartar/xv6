@@ -114,3 +114,19 @@ sys_getPerformanceData(void)
   // cprintf("\ncreate time is: %d | run time is: %d | ticks : %d | test: %d | akbar is: %d \n", myproc()->ctime, run_time, ticks, turnaroundtime, turnaroundtime - waitingtime);
   return 1;
 }
+
+int sys_nice(void)
+{
+    switch (myproc()->piority){
+        case HIGH_PIORITY:
+            myproc()->piority = MEDIUM_PIORITY;
+            break;
+        case MEDIUM_PIORITY:
+            myproc()->piority = LOW_PIORITY;
+            break;
+        default:
+            myproc()->piority = LOW_PIORITY;
+            break;
+    }
+    return myproc()->piority;
+}

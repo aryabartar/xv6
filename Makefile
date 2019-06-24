@@ -190,6 +190,7 @@ UPROGS=\
 	_waittest\
 	_RRsanity\
 	_Gsanity\
+	_Sanity\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
