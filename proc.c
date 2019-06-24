@@ -8,13 +8,13 @@
 #include "spinlock.h" 
 #define NULL 0
 
-#define RR          0
-#define FRR         1
-#define GRT         2
-#define Q3          3
+// #define RR          0
+// #define FRR         1
+// #define GRT         2
+// #define Q3          3
 
 
-int policyChooser = GRT;
+// int policyChooser = GRT;
 
 
 struct {
@@ -352,7 +352,8 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    if(policyChooser == RR){
+    #ifdef RR
+    // if(policyChooser == RR){
       for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
         if(p->state != RUNNABLE)
           continue;
@@ -365,9 +366,11 @@ scheduler(void)
         swtch(&(c->scheduler) , p->context);
         switchkvm();
         c->proc = 0;
+      // }
       }
-    }
-    else if(policyChooser == GRT){
+    #endif
+    #ifdef GRT
+    // else if(policyChooser == GRT){
       struct proc *minp = NULL;
         for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
           if(p->state == RUNNABLE){
@@ -390,7 +393,8 @@ scheduler(void)
           switchkvm();
           c->proc = 0;
         }
-    }
+    #endif
+  // }
     release(&ptable.lock);
   }
 }

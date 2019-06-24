@@ -144,6 +144,14 @@ getcmd(char *buf, int nbuf)
 int
 main(void)
 {
+
+  #ifdef RR
+  printf(1,"RR\n");
+  #endif
+  #ifdef GRT
+  printf(1,"GRT\n");
+  #endif
+
   static char buf[100];
   int fd;
 
