@@ -462,7 +462,6 @@ void scheduler(void)
 
 #ifdef FRR
     p = dequeue();
-
     if (p != NULL)
     {
 
