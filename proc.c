@@ -336,6 +336,17 @@ int wait(void)
   }
 }
 
+void print_ptable()
+{
+  struct proc *p;
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->pid != 0)
+    {
+      cprintf("pid: %d | state: %d\n", p->pid, p->state);
+    }
+  }
+}
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -357,7 +368,7 @@ void scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    if (policyChooser == RR)
+    if (policyChooser == FRR)
     {
       for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
       {
@@ -372,27 +383,14 @@ void scheduler(void)
         swtch(&(c->scheduler), p->context);
         switchkvm();
         c->proc = 0;
+        print_ptable();
       }
     }
-    else if (policyChooser == FRR)
+    else if (policyChooser == RR)
     {
-
       for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
       {
-        if (p->state != RUNNABLE)
-          continue;
-        
-        while (p->state == RUNNABLE || p->state == RUNNING)
-        {
-          c->proc = p;
-          switchuvm(p);
-          p->processCounter = 0;
-          p->state = RUNNING;
-
-          swtch(&(c->scheduler), p->context);
-          switchkvm();
-          c->proc = 0;
-        }
+        ;
       }
     }
 
