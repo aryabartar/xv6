@@ -388,73 +388,77 @@ scheduler(void)
       for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
         if(p->state != RUNNABLE)
           continue;
-        if(p->piority == HIGH_PIORITY) {existHigh = 1;break;}
-        else if(p->piority == MEDIUM_PIORITY) {existMid = 1;break;}
+        if(p->piority == HIGH_PIORITY) {existHigh = 1;}
+        else if(p->piority == MEDIUM_PIORITY) {existMid = 1;}
       }
 
       if(existHigh == 1){
         for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
           if(p->state != RUNNABLE) continue;
-          if(p->piority != 3)      continue;
+          if(p->piority == HIGH_PIORITY) {
         
-        // cprintf("---------------%d\n",p->pid);
-        struct proc *minp = NULL;
-        for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-          if(p->state == RUNNABLE){
-            if (minp !=NULL){
-              if(((p->rtime)*100/(ticks - p->ctime)) < ((minp->rtime)*100/(ticks - minp->ctime))){
-                minp = p;
+            // cprintf("111111\n");
+            struct proc *minp = NULL;
+            for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+              if(p->state == RUNNABLE){
+                if (minp !=NULL){
+                  if(((p->rtime)*100/(ticks - p->ctime)) < ((minp->rtime)*100/(ticks - minp->ctime))){
+                    minp = p;
+                  }
+                }
+                else
+                  minp = p;
               }
             }
-            else
-              minp = p;
+            if (minp!=NULL){
+              p = minp;
+              c->proc = p;
+              switchuvm(p);
+              p->state = RUNNING;
+              swtch(&mycpu()->scheduler, c->proc->context);
+              switchkvm();
+              c->proc = 0;
+            }
           }
-        }
-        if (minp!=NULL){
-          p = minp;
-          c->proc = p;
-          switchuvm(p);
-          p->state = RUNNING;
-          swtch(&mycpu()->scheduler, c->proc->context);
-          switchkvm();
-          c->proc = 0;
-        }
         }
       }
       else if(existMid == 1){
         for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
         if(p->state != RUNNABLE)    continue;
-        if(p->piority != 2)         continue;
-        // cprintf("----222------%d\n",p->pid);
-        for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-        if(p->state != RUNNABLE)
-          continue;
+          if(p->piority == 2) {
 
-        c->proc = p;
-        switchuvm(p);
-        p->processCounter = 0;
-        p->state = RUNNING;
-        
-        swtch(&(c->scheduler) , p->context);
-        switchkvm();
-        c->proc = 0;
-         }
+            // cprintf("22222\n");
+            for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+            if(p->state != RUNNABLE)
+              continue;
+
+            c->proc = p;
+            switchuvm(p);
+            p->processCounter = 0;
+            p->state = RUNNING;
+            
+            swtch(&(c->scheduler) , p->context);
+            switchkvm();
+            c->proc = 0;
+            }
+          }
         }
       }
-      else { 
-        // cprintf("--111-------%d\n",p->pid);
+      else{ 
         for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-        if(p->state != RUNNABLE)
-          continue;
+        if(p->state != RUNNABLE) continue;
+          if(p->piority == LOW_PIORITY){
 
-        c->proc = p;
-        switchuvm(p);
-        p->processCounter = 0;
-        p->state = RUNNING;
-        
-        swtch(&(c->scheduler) , p->context);
-        switchkvm();
-        c->proc = 0;
+            // cprintf("333333\n");
+            c->proc = p;
+            switchuvm(p);
+            p->processCounter = 0;
+            p->state = RUNNING;
+            
+            swtch(&(c->scheduler) , p->context);
+            switchkvm();
+            c->proc = 0;
+          }
         }
       }
     #endif
