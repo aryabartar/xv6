@@ -117,16 +117,8 @@ sys_getPerformanceData(void)
 
 int sys_nice(void)
 {
-    switch (myproc()->piority){
-        case HIGH_PIORITY:
-            myproc()->piority = MEDIUM_PIORITY;
-            break;
-        case MEDIUM_PIORITY:
-            myproc()->piority = LOW_PIORITY;
-            break;
-        default:
-            myproc()->piority = LOW_PIORITY;
-            break;
-    }
-    return myproc()->piority;
+  if(myproc() -> piority == HIGH_PIORITY) { myproc()->piority = MEDIUM_PIORITY; return myproc()->piority;}
+  else if(myproc() -> piority == MEDIUM_PIORITY) { myproc()->piority = LOW_PIORITY; return myproc()->piority;}
+  else if(myproc()-> piority == LOW_PIORITY) { myproc() -> piority = LOW_PIORITY; return myproc()->piority;}
+  else return 0;
 }

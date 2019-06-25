@@ -34,9 +34,9 @@ struct context {
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
-#define HIGH_PIORITY 2
-#define MEDIUM_PIORITY 1
-#define LOW_PIORITY 0
+#define HIGH_PIORITY 3
+#define MEDIUM_PIORITY 2
+#define LOW_PIORITY 1
 
 // Per-process state
 struct proc {
