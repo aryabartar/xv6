@@ -323,6 +323,68 @@ wait(void)
   }
 }
 
+int
+find_GRT(void){
+    double mingrt = 0;
+    struct proc *p;
+    struct proc *nnp;
+    int to_exec = -1;
+    for(nnp = ptable.proc; nnp < &ptable.proc[NPROC]; nnp++) {
+        double grt = (double) (nnp->rtime / (ticks - nnp->ctime + 1));
+        if (nnp->state == RUNNABLE && grt <= mingrt){
+            mingrt = grt;
+            to_exec = nnp->pid;
+        }
+    }
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->state != RUNNABLE || p->pid != to_exec)
+            continue;
+        return p->pid;
+    }
+    return -1;
+}
+
+int
+find_RR(void){
+    struct proc *p;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->state != RUNNABLE)
+            continue;
+        return p->pid;
+    }
+    return -1;
+}
+
+int
+find_MLQ(void){
+
+    struct proc *nnp;
+    int rpid = -1;
+    double mingrt = 0;
+    for(nnp = ptable.proc; nnp < &ptable.proc[NPROC]; nnp++) {
+        double grt = (double) (nnp->rtime / (ticks - nnp->ctime + 1));
+        if (nnp->state == RUNNABLE && grt <= mingrt && nnp->piority == HIGH_PIORITY){
+            mingrt = grt;
+            rpid = nnp->pid;
+        }
+    }
+    if (rpid == -1){
+        for(nnp = ptable.proc; nnp < &ptable.proc[NPROC]; nnp++) {
+            if (nnp->state == RUNNABLE && nnp->piority == MEDIUM_PIORITY){
+                rpid = nnp->pid;
+            }
+        }
+    }
+    if (rpid == -1){
+        for(nnp = ptable.proc; nnp < &ptable.proc[NPROC]; nnp++) {
+            if (nnp->state == RUNNABLE && nnp->piority == LOW_PIORITY){
+                rpid = nnp->pid;
+            }
+        }
+    }
+    return rpid;
+}
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -337,6 +399,7 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
+  int pid = -1;
 
   for(;;){
     // Enable interrupts on this processor.
@@ -345,123 +408,24 @@ scheduler(void)
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     #ifdef RR
-      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-        if(p->state != RUNNABLE)
-          continue;
-
-        c->proc = p;
-        switchuvm(p);
-        p->processCounter = 0;
-        p->state = RUNNING;
-        
-        swtch(&(c->scheduler) , p->context);
-        switchkvm();
-        c->proc = 0;
-      }
+      pid = find_RR();
     #endif
     #ifdef GRT
-      struct proc *minp = NULL;
-        for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-          if(p->state == RUNNABLE){
-            if (minp !=NULL){
-              if(((p->rtime)*100/(ticks - p->ctime)) < ((minp->rtime)*100/(ticks - minp->ctime))){
-                minp = p;
-              }
-            }
-            else
-              minp = p;
-          }
-        }
-        if (minp!=NULL){
-          p = minp;
-          c->proc = p;
-          switchuvm(p);
-          p->state = RUNNING;
-          swtch(&mycpu()->scheduler, c->proc->context);
-          switchkvm();
-          c->proc = 0;
-        }
+      pid = find_GRT();
     #endif
     #ifdef MLQ
-      int  existHigh = 0;
-      int existMid  = 0;
-      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-        if(p->state != RUNNABLE)
-          continue;
-        if(p->piority == HIGH_PIORITY) {existHigh = 1;}
-        else if(p->piority == MEDIUM_PIORITY) {existMid = 1;}
-      }
-
-      if(existHigh == 1){
-        for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-          if(p->state != RUNNABLE) continue;
-          if(p->piority == HIGH_PIORITY) {
-        
-            // cprintf("111111\n");
-            struct proc *minp = NULL;
-            for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-              if(p->state == RUNNABLE){
-                if (minp !=NULL){
-                  if(((p->rtime)*100/(ticks - p->ctime)) < ((minp->rtime)*100/(ticks - minp->ctime))){
-                    minp = p;
-                  }
-                }
-                else
-                  minp = p;
-              }
-            }
-            if (minp!=NULL){
-              p = minp;
-              c->proc = p;
-              switchuvm(p);
-              p->state = RUNNING;
-              swtch(&mycpu()->scheduler, c->proc->context);
-              switchkvm();
-              c->proc = 0;
-            }
-          }
-        }
-      }
-      else if(existMid == 1){
-        for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-        if(p->state != RUNNABLE)    continue;
-          if(p->piority == 2) {
-
-            // cprintf("22222\n");
-            for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-            if(p->state != RUNNABLE)
-              continue;
-
-            c->proc = p;
-            switchuvm(p);
-            p->processCounter = 0;
-            p->state = RUNNING;
-            
-            swtch(&(c->scheduler) , p->context);
-            switchkvm();
-            c->proc = 0;
-            }
-          }
-        }
-      }
-      else{ 
-        for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-        if(p->state != RUNNABLE) continue;
-          if(p->piority == LOW_PIORITY){
-
-            // cprintf("333333\n");
-            c->proc = p;
-            switchuvm(p);
-            p->processCounter = 0;
-            p->state = RUNNING;
-            
-            swtch(&(c->scheduler) , p->context);
-            switchkvm();
-            c->proc = 0;
-          }
-        }
-      }
+      pid = find_MLQ();
     #endif
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+           if(p->pid != pid)
+               continue;
+           c->proc = p;
+           switchuvm(p);
+           p->state = RUNNING;
+           swtch(&(c->scheduler) , p->context);
+           switchkvm();
+           c->proc = 0;
+    }
     release(&ptable.lock);
   }
 }
