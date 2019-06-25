@@ -7,11 +7,13 @@
 #include "proc.h"
 #include "spinlock.h"
 
+
 #define RR 0
 #define FRR 1
 #define GRT 2
 #define Q3 3
 
+void exit();
 int policyChooser = FRR;
 
 struct
@@ -339,14 +341,17 @@ int wait(void)
 void print_ptable()
 {
   struct proc *p;
+  int counter = 0;
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
-    if (p->pid != 0)
+    counter++;
+    if (!(p->pid == 0 || p->pid == 1 || p->pid == 2))
     {
-      cprintf("pid: %d | state: %d\n", p->pid, p->state);
+      cprintf("pid: %d | state: %d | position: %d\n", p->pid, p->state, counter);
     }
   }
 }
+
 
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
@@ -392,27 +397,25 @@ void scheduler(void)
       {
         if (p->state != RUNNABLE)
         {
-          continue;
-        }
-        
-        if (!(p->state == RUNNING || p->state == RUNNABLE) && !(p->pid == 0 || p->pid == 1 || p->pid == 2))
-        {
-          struct proc *pp = p;
-          while (pp < &ptable.proc[NPROC])
-          {
-            pp++;
-            if (pp->pid == 0)
-            {
-              struct proc *tempproc;
-              tempproc = p;
-              p = pp;
-              pp = tempproc;
+          if (!(p->pid == RUNNABLE || p->pid == RUNNING) && !(p->pid == 0 || p->pid == 1 || p->pid == 2)){
+            struct proc *pp = p ;
+            cprintf("\ninsert to black, pid is:%d\n", p->pid);
+            
+            while (pp < (&ptable.proc[NPROC] - 1)){
+              cprintf("\n---\n");
+              *pp = *(pp + 1);
+              cprintf("moved pid: %d \n", pp->pid );
+              pp++;              
             }
+            cprintf("\nThis is moved to end is: %d\n\n\n", p->pid);
+            ptable.proc[63] = *p;
+            p = p-1;
           }
 
           continue;
         }
 
+        print_ptable();
         c->proc = p;
         switchuvm(p);
         p->processCounter = 0;
