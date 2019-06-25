@@ -36,6 +36,9 @@ enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
 struct proc {
+  struct proc* nextproc; 
+  struct proc* prevproc;
+
   int ctime;
   int etime;
   int rtime;

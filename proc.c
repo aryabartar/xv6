@@ -5,16 +5,81 @@
 #include "mmu.h"
 #include "x86.h"
 #include "proc.h"
+#include "stddef.h"
 #include "spinlock.h"
+#include "stdbool.h"
 
+// #define RR 0
+#define FRR 0
+// #define GRT 2
+// #define Q3 3
 
-#define RR 0
-#define FRR 1
-#define GRT 2
-#define Q3 3
+#ifdef FRR
+struct
+{
+  struct proc *first;
+  struct proc *last;
+} Queue = {NULL, NULL};
 
-void exit();
-int policyChooser = FRR;
+int initialze(struct proc *p)
+{
+  if (Queue.first == NULL || Queue.last == NULL)
+  {
+    p->nextproc = Queue.first;
+    p->prevproc = Queue.first;
+
+    Queue.first = p;
+    Queue.last = p;
+    return 0;
+  }
+
+  return 1;
+}
+void set_next_and_prev(struct proc *p, struct proc *next, struct proc *prev)
+{
+  p->nextproc = next;
+  p->prevproc = prev;
+}
+
+bool empty_queue()
+{
+  if ((Queue.first == NULL) || (Queue.last == NULL))
+    return true;
+  return false;
+}
+
+int enqueue(struct proc *newproc)
+{
+  initialze(newproc);
+
+  Queue.last->nextproc = newproc;
+  set_next_and_prev(newproc, NULL, Queue.last);
+
+  Queue.last = newproc;
+  return 0;
+}
+
+struct proc *dequeue()
+{
+  struct proc *p = Queue.first;
+
+  if (p == NULL)
+    return NULL;
+
+  Queue.first = p->nextproc;
+
+  if (empty_queue())
+  {
+    Queue.last = NULL;
+  }
+  else
+  {
+    set_next_and_prev(Queue.first, Queue.first->nextproc, NULL);
+  }
+
+  return p;
+}
+#endif
 
 struct
 {
@@ -161,7 +226,9 @@ void userinit(void)
   // writes to be visible, and the lock is also needed
   // because the assignment might not be atomic.
   acquire(&ptable.lock);
-
+#ifdef FRR
+  enqueue(p);
+#endif
   p->state = RUNNABLE;
 
   release(&ptable.lock);
@@ -231,6 +298,9 @@ int fork(void)
 
   acquire(&ptable.lock);
 
+#ifdef FRR
+  enqueue(np);
+#endif
   np->state = RUNNABLE;
 
   release(&ptable.lock);
@@ -352,7 +422,6 @@ void print_ptable()
   }
 }
 
-
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -374,58 +443,39 @@ void scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    if (policyChooser == RR)
+#ifdef RR
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     {
-      for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-      {
-        if (p->state != RUNNABLE)
-          continue;
+      if (p->state != RUNNABLE)
+        continue;
 
-        c->proc = p;
-        switchuvm(p);
-        p->processCounter = 0;
-        p->state = RUNNING;
+      c->proc = p;
+      switchuvm(p);
+      p->processCounter = 0;
+      p->state = RUNNING;
 
-        swtch(&(c->scheduler), p->context);
-        switchkvm();
-        c->proc = 0;
-      }
+      swtch(&(c->scheduler), p->context);
+      switchkvm();
+      c->proc = 0;
     }
-    else if (policyChooser == FRR)
+#endif
+
+#ifdef FRR
+    p = dequeue();
+
+    if (p != NULL)
     {
-      for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-      {
-        if (p->state != RUNNABLE)
-        {
-          if (!(p->pid == RUNNABLE || p->pid == RUNNING) && !(p->pid == 0 || p->pid == 1 || p->pid == 2)){
-            struct proc *pp = p ;
-            cprintf("\ninsert to black, pid is:%d\n", p->pid);
-            
-            while (pp < (&ptable.proc[NPROC] - 1)){
-              cprintf("\n---\n");
-              *pp = *(pp + 1);
-              cprintf("moved pid: %d \n", pp->pid );
-              pp++;              
-            }
-            cprintf("\nThis is moved to end is: %d\n\n\n", p->pid);
-            ptable.proc[63] = *p;
-            p = p-1;
-          }
 
-          continue;
-        }
+      c->proc = p;
+      switchuvm(p);
+      p->processCounter = 0;
+      p->state = RUNNING;
 
-        print_ptable();
-        c->proc = p;
-        switchuvm(p);
-        p->processCounter = 0;
-        p->state = RUNNING;
-
-        swtch(&(c->scheduler), p->context);
-        switchkvm();
-        c->proc = 0;
-      }
+      swtch(&(c->scheduler), p->context);
+      switchkvm();
+      c->proc = 0;
     }
+#endif
 
     release(&ptable.lock);
   }
@@ -468,18 +518,13 @@ void yield(void)
   }
   else
   {
-    if (policyChooser == FRR)
-    {
-      // cprintf("%s", myproc()->state);
-    }
-    else
-    {
-      cprintf("HHHHHH");
-      acquire(&ptable.lock); //DOC: yieldlock
-      myproc()->state = RUNNABLE;
-      sched();
-      release(&ptable.lock);
-    }
+    acquire(&ptable.lock); //DOC: yieldlock
+#ifdef FRR
+    enqueue(myproc());
+#endif
+    myproc()->state = RUNNABLE;
+    sched();
+    release(&ptable.lock);
   }
 }
 
@@ -554,7 +599,12 @@ wakeup1(void *chan)
 
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if (p->state == SLEEPING && p->chan == chan)
+    {
+#ifdef FRR
+      enqueue(p);
+#endif
       p->state = RUNNABLE;
+    }
 }
 
 // Wake up all processes sleeping on chan.
