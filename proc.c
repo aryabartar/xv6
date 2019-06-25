@@ -394,10 +394,9 @@ void scheduler(void)
         {
           continue;
         }
-
-        if ((p->state != RUNNING || p->state != RUNNABLE) && !(p->pid == 0 || p->pid == 1 || p->pid == 2))
+        
+        if (!(p->state == RUNNING || p->state == RUNNABLE) && !(p->pid == 0 || p->pid == 1 || p->pid == 2))
         {
-          cprintf("pid: %d | state: %d\n", p->pid, p->state);
           struct proc *pp = p;
           while (pp < &ptable.proc[NPROC])
           {
@@ -414,7 +413,6 @@ void scheduler(void)
           continue;
         }
 
-        cprintf("HERE");
         c->proc = p;
         switchuvm(p);
         p->processCounter = 0;
