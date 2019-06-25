@@ -20,7 +20,7 @@ void rrtest(void)
         if (pid == 0)
         {
             int i;
-            for (i = 0; i < 30; i++)
+            for (i = 0; i < 100; i++)
             {   
                 while(lock);
                 lock=true;

@@ -347,6 +347,7 @@ void print_ptable()
     }
   }
 }
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -368,7 +369,7 @@ void scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    if (policyChooser == FRR)
+    if (policyChooser == RR)
     {
       for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
       {
@@ -383,14 +384,45 @@ void scheduler(void)
         swtch(&(c->scheduler), p->context);
         switchkvm();
         c->proc = 0;
-        print_ptable();
       }
     }
-    else if (policyChooser == RR)
+    else if (policyChooser == FRR)
     {
       for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
       {
-        ;
+        if (p->state != RUNNABLE)
+        {
+          continue;
+        }
+
+        if ((p->state != RUNNING || p->state != RUNNABLE) && !(p->pid == 0 || p->pid == 1 || p->pid == 2))
+        {
+          cprintf("pid: %d | state: %d\n", p->pid, p->state);
+          struct proc *pp = p;
+          while (pp < &ptable.proc[NPROC])
+          {
+            pp++;
+            if (pp->pid == 0)
+            {
+              struct proc *tempproc;
+              tempproc = p;
+              p = pp;
+              pp = tempproc;
+            }
+          }
+
+          continue;
+        }
+
+        cprintf("HERE");
+        c->proc = p;
+        switchuvm(p);
+        p->processCounter = 0;
+        p->state = RUNNING;
+
+        swtch(&(c->scheduler), p->context);
+        switchkvm();
+        c->proc = 0;
       }
     }
 
