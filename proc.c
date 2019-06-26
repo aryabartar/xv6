@@ -5,14 +5,82 @@
 #include "mmu.h"
 #include "x86.h"
 #include "proc.h"
-#include "spinlock.h" 
-#define NULL 0
+#include "stddef.h"
+#include "spinlock.h"
+#include "stdbool.h"
+// #define NULL 0
 
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
 } ptable;
 
+#ifdef FRR
+struct
+{
+  struct proc *first;
+  struct proc *last;
+} Queue = {NULL, NULL};
+
+int initialze(struct proc *p)
+{
+  if (Queue.first == NULL || Queue.last == NULL)
+  {
+    p->nextproc = Queue.first;
+    p->prevproc = Queue.first;
+
+    Queue.first = p;
+    Queue.last = p;
+    return 0;
+  }
+
+  return 1;
+}
+void set_next_and_prev(struct proc *p, struct proc *next, struct proc *prev)
+{
+  p->nextproc = next;
+  p->prevproc = prev;
+}
+
+bool empty_queue()
+{
+  if ((Queue.first == NULL) || (Queue.last == NULL))
+    return true;
+  return false;
+}
+
+int enqueue(struct proc *newproc)
+{
+  initialze(newproc);
+
+  Queue.last->nextproc = newproc;
+  set_next_and_prev(newproc, NULL, Queue.last);
+
+  Queue.last = newproc;
+  return 0;
+}
+
+struct proc *dequeue()
+{
+  struct proc *p = Queue.first;
+
+  if (p == NULL)
+      return NULL;
+
+    Queue.first = p->nextproc;
+
+    if (empty_queue())
+    {
+      Queue.last = NULL;
+    }
+    else
+    {
+      set_next_and_prev(Queue.first, Queue.first->nextproc, NULL);
+    }
+
+    return p;
+}
+#endif
 int processCounter;
 static struct proc *initproc;
 
@@ -155,7 +223,9 @@ userinit(void)
   // writes to be visible, and the lock is also needed
   // because the assignment might not be atomic.
   acquire(&ptable.lock);
-
+  #ifdef FRR
+    enqueue(p);
+  #endif
   p->state = RUNNABLE;
 
   release(&ptable.lock);
@@ -221,7 +291,9 @@ fork(void)
   pid = np->pid;
 
   acquire(&ptable.lock);
-
+  #ifdef FRR
+    enqueue(np);
+  #endif
   np->state = RUNNABLE;
 
   release(&ptable.lock);
@@ -320,6 +392,20 @@ wait(void)
 
     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
     sleep(curproc, &ptable.lock);  //DOC: wait-sleep
+    }
+}
+
+void print_ptable()
+{
+  struct proc *p;
+  int counter = 0;
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    counter++;
+    if (!(p->pid == 0 || p->pid == 1 || p->pid == 2))
+    {
+      cprintf("pid: %d | state: %d | position: %d\n", p->pid, p->state, counter);
+    }
   }
 }
 
@@ -413,6 +499,21 @@ scheduler(void)
     #ifdef RR
       pid = find_RR();
     #endif
+    #ifdef FRR
+    p = dequeue();
+    if (p != NULL)
+    {
+
+      c->proc = p;
+      switchuvm(p);
+      p->processCounter = 0;
+      p->state = RUNNING;
+
+      swtch(&(c->scheduler), p->context);
+      switchkvm();
+      c->proc = 0;
+    }
+#endif
     #ifdef GRT
       pid = find_GRT();
     #endif
@@ -471,6 +572,9 @@ yield(void)
   }
   else{
     acquire(&ptable.lock);  //DOC: yieldlock
+    #ifdef FRR
+    enqueue(myproc());
+    #endif
     myproc()->state = RUNNABLE;
     sched();
     release(&ptable.lock);
@@ -546,8 +650,11 @@ wakeup1(void *chan)
   struct proc *p;
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == SLEEPING && p->chan == chan)
-      p->state = RUNNABLE;
+    if(p->state == SLEEPING && p->chan == chan){
+      #ifdef FRR
+      enqueue(p);
+      #endif
+      p->state = RUNNABLE;}
 }
 
 // Wake up all processes sleeping on chan.
