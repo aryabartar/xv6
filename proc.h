@@ -40,9 +40,12 @@ enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
 struct proc {
+  struct proc* nextproc;
+  struct proc* prevproc;
   int ctime;
   int etime;
   int rtime; 
+  int lref;
   int piority;
   int processCounter;              
   uint sz;                     // Size of process memory (bytes)
