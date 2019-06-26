@@ -323,10 +323,8 @@ wait(void)
   }
 }
 
-int
-find_GRT(void){
+int find_rpid(){
     double mingrt = 0;
-    struct proc *p;
     struct proc *nnp;
     int to_exec = -1;
     for(nnp = ptable.proc; nnp < &ptable.proc[NPROC]; nnp++) {
@@ -336,8 +334,16 @@ find_GRT(void){
             to_exec = nnp->pid;
         }
     }
+    return to_exec;
+}
+
+int
+find_GRT(void){
+    struct proc *p;
+    int rpid = -1;
+    rpid = find_rpid();
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-        if(p->state != RUNNABLE || p->pid != to_exec)
+        if(p->state != RUNNABLE || p->pid != rpid)
             continue;
         return p->pid;
     }
@@ -402,10 +408,7 @@ scheduler(void)
   int pid = -1;
 
   for(;;){
-    // Enable interrupts on this processor.
     sti();
-
-    // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     #ifdef RR
       pid = find_RR();
