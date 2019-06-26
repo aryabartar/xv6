@@ -8,7 +8,6 @@
 #include "stddef.h"
 #include "spinlock.h"
 #include "stdbool.h"
-// #define NULL 0
 
 struct {
   struct spinlock lock;
@@ -513,7 +512,7 @@ scheduler(void)
       switchkvm();
       c->proc = 0;
     }
-#endif
+    #endif
     #ifdef GRT
       pid = find_GRT();
     #endif
