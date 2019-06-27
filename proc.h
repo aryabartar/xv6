@@ -34,15 +34,19 @@ struct context {
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
+#define HIGH_PIORITY 3
+#define MEDIUM_PIORITY 2
+#define LOW_PIORITY 1
+
 // Per-process state
 struct proc {
-  struct proc* nextproc; 
+  struct proc* nextproc;
   struct proc* prevproc;
-
   int ctime;
   int etime;
-  int rtime;
-  int lref; 
+  int rtime; 
+  int lref;
+  int piority;
   int processCounter;              
   uint sz;                     // Size of process memory (bytes)
   pde_t* pgdir;                // Page table

@@ -9,10 +9,11 @@
 #include "spinlock.h"
 #include "stdbool.h"
 
-// #define RR 0
-#define FRR 0
-// #define GRT 2
-// #define Q3 3
+struct
+{
+  struct spinlock lock;
+  struct proc proc[NPROC];
+} ptable;
 
 #ifdef FRR
 struct
@@ -64,29 +65,22 @@ struct proc *dequeue()
   struct proc *p = Queue.first;
 
   if (p == NULL)
-    return NULL;
+      return NULL;
 
-  Queue.first = p->nextproc;
+    Queue.first = p->nextproc;
 
-  if (empty_queue())
-  {
-    Queue.last = NULL;
-  }
-  else
-  {
-    set_next_and_prev(Queue.first, Queue.first->nextproc, NULL);
-  }
+    if (empty_queue())
+    {
+      Queue.last = NULL;
+    }
+    else
+    {
+      set_next_and_prev(Queue.first, Queue.first->nextproc, NULL);
+    }
 
-  return p;
+    return p;
 }
 #endif
-
-struct
-{
-  struct spinlock lock;
-  struct proc proc[NPROC];
-} ptable;
-
 int processCounter;
 static struct proc *initproc;
 
@@ -167,6 +161,7 @@ found:
   p->pid = nextpid++;
   p->rtime = 0;
   p->ctime = ticks;
+  p->piority = HIGH_PIORITY;
 
   release(&ptable.lock);
 
@@ -226,9 +221,11 @@ void userinit(void)
   // writes to be visible, and the lock is also needed
   // because the assignment might not be atomic.
   acquire(&ptable.lock);
-#ifdef FRR
-  enqueue(p);
-#endif
+
+  #ifdef FRR
+    enqueue(p);
+  #endif
+
   p->state = RUNNABLE;
 
   release(&ptable.lock);
@@ -298,9 +295,10 @@ int fork(void)
 
   acquire(&ptable.lock);
 
-#ifdef FRR
-  enqueue(np);
-#endif
+  #ifdef FRR
+    enqueue(np);
+  #endif
+
   np->state = RUNNABLE;
 
   release(&ptable.lock);
@@ -404,8 +402,9 @@ int wait(void)
     }
 
     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
-    sleep(curproc, &ptable.lock); //DOC: wait-sleep
-  }
+    sleep(curproc, &ptable.lock);  //DOC: wait-sleep
+    }
+
 }
 
 void print_ptable()
@@ -422,6 +421,74 @@ void print_ptable()
   }
 }
 
+int find_rpid(){
+    double mingrt = 0;
+    struct proc *nnp;
+    int to_exec = -1;
+    for(nnp = ptable.proc; nnp < &ptable.proc[NPROC]; nnp++) {
+        double grt = (double) (nnp->rtime / (ticks - nnp->ctime + 1));
+        if (nnp->state == RUNNABLE && grt <= mingrt){
+            mingrt = grt;
+            to_exec = nnp->pid;
+        }
+    }
+    return to_exec;
+}
+
+int
+find_GRT(void){
+    struct proc *p;
+    int rpid = -1;
+    rpid = find_rpid();
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->state != RUNNABLE || p->pid != rpid)
+            continue;
+        return p->pid;
+    }
+    return -1;
+}
+
+int
+find_RR(void){
+    struct proc *p;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->state != RUNNABLE)
+            continue;
+        return p->pid;
+    }
+    return -1;
+}
+
+int
+find_MLQ(void){
+
+    struct proc *nnp;
+    int rpid = -1;
+    double mingrt = 0;
+    for(nnp = ptable.proc; nnp < &ptable.proc[NPROC]; nnp++) {
+        double grt = (double) (nnp->rtime / (ticks - nnp->ctime + 1));
+        if (nnp->state == RUNNABLE && grt <= mingrt && nnp->piority == HIGH_PIORITY){
+            mingrt = grt;
+            rpid = nnp->pid;
+        }
+    }
+    if (rpid == -1){
+        for(nnp = ptable.proc; nnp < &ptable.proc[NPROC]; nnp++) {
+            if (nnp->state == RUNNABLE && nnp->piority == MEDIUM_PIORITY){
+                rpid = nnp->pid;
+            }
+        }
+    }
+    if (rpid == -1){
+        for(nnp = ptable.proc; nnp < &ptable.proc[NPROC]; nnp++) {
+            if (nnp->state == RUNNABLE && nnp->piority == LOW_PIORITY){
+                rpid = nnp->pid;
+            }
+        }
+    }
+    return rpid;
+}
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -435,32 +502,18 @@ void scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
+  int pid = -1;
 
-  for (;;)
-  {
-    // Enable interrupts on this processor.
+
+  for(;;){
     sti();
-
-    // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-#ifdef RR
-    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    {
-      if (p->state != RUNNABLE)
-        continue;
 
-      c->proc = p;
-      switchuvm(p);
-      p->processCounter = 0;
-      p->state = RUNNING;
+    #ifdef RR
+      pid = find_RR();
+    #endif
+    #ifdef FRR
 
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
-      c->proc = 0;
-    }
-#endif
-
-#ifdef FRR
     p = dequeue();
     if (p != NULL)
     {
@@ -473,6 +526,25 @@ void scheduler(void)
       swtch(&(c->scheduler), p->context);
       switchkvm();
       c->proc = 0;
+
+    }
+    #endif
+    #ifdef GRT
+      pid = find_GRT();
+    #endif
+    #ifdef MLQ
+      pid = find_MLQ();
+    #endif
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+           if(p->pid != pid)
+               continue;
+           c->proc = p;
+           switchuvm(p);
+           p->state = RUNNING;
+           swtch(&(c->scheduler) , p->context);
+           switchkvm();
+           c->proc = 0;
+
     }
 #endif
 
@@ -515,12 +587,12 @@ void yield(void)
   {
     //Not ready for CS
   }
-  else
-  {
-    acquire(&ptable.lock); //DOC: yieldlock
-#ifdef FRR
+
+  else{
+    acquire(&ptable.lock);  //DOC: yieldlock
+    #ifdef FRR
     enqueue(myproc());
-#endif
+    #endif
     myproc()->state = RUNNABLE;
     sched();
     release(&ptable.lock);
@@ -596,14 +668,13 @@ wakeup1(void *chan)
 {
   struct proc *p;
 
-  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if (p->state == SLEEPING && p->chan == chan)
-    {
-#ifdef FRR
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    if(p->state == SLEEPING && p->chan == chan){
+      #ifdef FRR
       enqueue(p);
-#endif
-      p->state = RUNNABLE;
-    }
+      #endif
+      p->state = RUNNABLE;}
+
 }
 
 // Wake up all processes sleeping on chan.
