@@ -191,7 +191,6 @@ UPROGS=\
 	_RRsanity\
 	_Gsanity\
 	_Sanity\
-
 	_frrTest\
 
 fs.img: mkfs README $(UPROGS)
