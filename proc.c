@@ -434,16 +434,6 @@ find_GRT(void){
     return -1;
 }
 
-int
-find_RR(void){
-    struct proc *p;
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-        if(p->state != RUNNABLE)
-            continue;
-        return p->pid;
-    }
-    return -1;
-}
 
 int
 find_MLQ(void){
@@ -490,13 +480,25 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
-  int pid = -1;
 
   for(;;){
     sti();
     acquire(&ptable.lock);
     #ifdef RR
-    pid = find_RR();
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    {
+      if (p->state != RUNNABLE)
+        continue;
+
+      c->proc = p;
+      switchuvm(p);
+      p->processCounter = 0;
+      p->state = RUNNING;
+
+      swtch(&(c->scheduler), p->context);
+      switchkvm();
+      c->proc = 0;
+    }
     #endif
     #ifdef FRR
     p = dequeue();
@@ -514,12 +516,8 @@ scheduler(void)
     }
     #endif
     #ifdef GRT
-      pid = find_GRT();
-    #endif
-    #ifdef MLQ
-      pid = find_MLQ();
-    #endif
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      int pid = find_GRT();
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
            if(p->pid != pid)
                continue;
            c->proc = p;
@@ -529,6 +527,20 @@ scheduler(void)
            switchkvm();
            c->proc = 0;
     }
+    #endif
+    #ifdef MLQ
+      int pid = find_MLQ();
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+           if(p->pid != pid)
+               continue;
+           c->proc = p;
+           switchuvm(p);
+           p->state = RUNNING;
+           swtch(&(c->scheduler) , p->context);
+           switchkvm();
+           c->proc = 0;
+      } 
+    #endif
     release(&ptable.lock);
   }
 }
