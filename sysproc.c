@@ -122,3 +122,15 @@ int sys_nice(void)
   else if(myproc()-> piority == LOW_PIORITY) { myproc() -> piority = LOW_PIORITY; return myproc()->piority;}
   else return 0;
 }
+
+int
+sys_wait2(void){
+    int *wtime;
+    int *rtime;
+    if(argptr(0, (void *)&wtime, sizeof(int)) < 0)
+        return -1;
+    if(argptr(1, (void *)&rtime, sizeof(int)) < 0)
+        return -1;
+    int pid = wait2(wtime, rtime);
+    return pid;
+}
