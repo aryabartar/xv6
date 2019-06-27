@@ -24,7 +24,9 @@ void rrtest(void)
             {   
                 while(lock);
                 lock=true;
+
                 printf(1, " [pid:%d] ", getpid(), i);
+
                 lock=false;
             }
             break;
@@ -37,6 +39,7 @@ void rrtest(void)
             wait();
         }
     }
+
     while(lock);
     lock = true;
     getPerformanceData(&wTime, &rTime);
@@ -44,6 +47,7 @@ void rrtest(void)
     printf(1, "wTime: %d | ", wTime);
     printf(1, "rTime: %d] \n\n", rTime);
     lock = false;
+
 }
 
 int main(void)
